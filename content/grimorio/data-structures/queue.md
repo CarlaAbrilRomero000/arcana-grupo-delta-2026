@@ -23,7 +23,7 @@ Resuelve problemas donde el orden de llegada debe preservarse (FIFO). Es una est
 
 ### Representación
 
-![](/attachments/grimorio/data-structures/queue.svg)
+![](/attachments/grimorio/data-structures/queue-circular-animada.svg)
 
 Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la elección importa. Sobre una lista enlazada basta con guardar dos punteros (`front` y `rear`) para tener ambas operaciones en $O(1)$. Sobre un array la implementación ingenua es una trampa: si se desencola desplazando todos los elementos una posición a la izquierda, `dequeue` cuesta $O(n)$. La solución estándar es tratar el arreglo como **circular** (_ring buffer_), moviendo los índices con módulo en lugar de mover los datos.
 
