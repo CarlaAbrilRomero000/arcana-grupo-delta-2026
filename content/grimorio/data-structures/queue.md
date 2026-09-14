@@ -141,3 +141,36 @@ def bfs(grafo, inicio):
 - "Procesar en el orden en que llegan" / "primero en entrar, primero en salir".
 - Recorrido "por niveles" o "por oleadas" (BFS, propagación de estados).
 - Simulación de una fila de espera real, o "los primeros k en llegar".
+
+## 5. Relaciones y extensiones
+
+### Variantes
+
+- Cola circular: normalmente implementada sobre un array. Cuando se alcanza el final de este, se puede volver al comienzo aprovechando las posiciones que quedaron libres. Esto permite utilizar eficientemente el espacio disponible y evita tener que desplazar elementos.
+- Cola de prioridad: cada elemento de la cola tiene asociada una prioridad. El siguiente elemento en ser procesado no necesariamente es el que llegó primero, sino el que posee mayor prioridad. Una estructura común para implementarla eficientemente es el heap.
+- Deque (double-ended queue): permite insertar y eliminar elementos desde ambos extremos. Es más flexible que una cola tradicional, ya que permite comportamientos similares tanto a una cola como a una pila.
+
+### Relación con otras estructuras
+
+- Pila: ambas restringen el acceso directo a los elementos y definen claramente dónde se insertan y eliminan.
+- Árboles y grafos: el algoritmo BFS utiliza una cola para garantizar que los nodos se procesen por niveles.
+- Arrays y linked lists: una cola puede implementarse utilizando arrays o listas enlazadas.
+
+### Notas avanzadas
+
+#### Persistencia
+Una cola puede almacenarse en memoria secundaria para conservar los elementos pendientes incluso cuando el programa deja de ejecutarse. Esto resulta útil en sistemas de procesamiento de tareas y colas de mensajes, donde no se debe perder el trabajo pendiente ante una interrupción.
+
+#### Concurrencia
+En sistemas donde varios procesos o hilos producen y consumen elementos simultáneamente, es necesario utilizar mecanismos de sincronización para evitar problemas de condiciones de carrera. Para estos escenarios existen implementaciones de colas concurrentes diseñadas específicamente para permitir el acceso seguro de múltiples procesos o hilos.
+
+#### Paralelismo
+Una cola puede utilizarse para distribuir tareas entre distintos workers, de modo que los productores agregan trabajo y los consumidores lo toman para ejecutarlo. Esto permite repartir dinámicamente la carga de trabajo.
+
+#### Colas de mensajes
+Las colas de mensajes se utilizan para comunicar componentes de una aplicación de forma asíncrona. Un productor coloca mensajes en la cola y un consumidor los procesa posteriormente. Esto permite desacoplar componentes y manejar picos de demanda mediante el almacenamiento temporal de tareas.
+
+## 6. Referencias y recursos
+- [Queue Data Structure - Devopedia](https://devopedia.org/queue-data-structure)
+- [[COR2011]] - Chapter 10.1 Stacks and queues
+- [[DRO1995]] - Chapter 3 Stacks and queues
