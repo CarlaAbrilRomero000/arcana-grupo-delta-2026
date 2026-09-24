@@ -101,14 +101,49 @@ from collections import deque
 
 def bfs(grafo, inicio):
     visitados = {inicio}
+    orden = []
     q = deque([inicio])
     while q:
         nodo = q.popleft()
+        orden.append(nodo)
         for vecino in grafo[nodo]:
             if vecino not in visitados:
                 visitados.add(vecino)
                 q.append(vecino)
+    return orden
 ```
+
+**Entrada:** el siguiente grafo, partiendo del nodo `A`.
+
+```
+    A
+   / \
+  B   C
+   \ /
+    D
+    |
+    E
+```
+
+```python
+grafo = {
+    "A": ["B", "C"],
+    "B": ["A", "D"],
+    "C": ["A", "D"],
+    "D": ["B", "C", "E"],
+    "E": ["D"],
+}
+
+print(bfs(grafo, "A"))
+```
+
+**Salida:**
+
+```
+['A', 'B', 'C', 'D', 'E']
+```
+
+`A` se visita primero (nivel 0). Sus vecinos `B` y `C` entran a la cola y se visitan a continuación (nivel 1). `D` es vecino tanto de `B` como de `C`, pero ya está en `visitados` la segunda vez que se lo encuentra, así que solo se encola una vez, al procesar `B` (nivel 2). Por último se visita `E` (nivel 3). Ningún nodo de nivel 2 se visita antes que uno de nivel 1, que es justamente la garantía que da BFS con una cola.
 
 ## 4. Uso y criterio
 
