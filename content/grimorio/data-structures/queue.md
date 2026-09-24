@@ -143,7 +143,26 @@ print(bfs(grafo, "A"))
 ['A', 'B', 'C', 'D', 'E']
 ```
 
-`A` se visita primero (nivel 0). Sus vecinos `B` y `C` entran a la cola y se visitan a continuación (nivel 1). `D` es vecino tanto de `B` como de `C`, pero ya está en `visitados` la segunda vez que se lo encuentra, así que solo se encola una vez, al procesar `B` (nivel 2). Por último se visita `E` (nivel 3). Ningún nodo de nivel 2 se visita antes que uno de nivel 1, que es justamente la garantía que da BFS con una cola.
+El grafo tiene forma de rombo con una cola colgando de `D`:
+
+```
+    A
+   / \
+  B   C
+   \ /
+    D
+    |
+    E
+```
+
+BFS lo recorre en capas, alejándose de a un paso por vez desde `A`:
+
+- **Nivel 0** (`A`): arranca la cola con `[A]`. Se saca `A`, se marca como visitado y es el primero en `orden`.
+- **Nivel 1** (`B`, `C`): al procesar `A` se descubren sus vecinos `B` y `C`, y se encolan en ese orden: `[B, C]`.
+- **Nivel 2** (`D`): se saca `B`; su vecino `D` todavía no está visitado, así que se marca y se encola. Se saca `C`; también tiene a `D` como vecino, pero ya está en `visitados`, así que no se vuelve a encolar. `D` llegó a la cola por el camino `A → B → D`.
+- **Nivel 3** (`E`): se saca `D`; su único vecino nuevo es `E`, que se encola y se visita al final.
+
+En ningún momento se visita un nodo de un nivel antes de terminar con todos los del nivel anterior — esa es la garantía que da usar una cola (FIFO) en vez de, por ejemplo, una pila.
 
 ## 4. Uso y criterio
 
