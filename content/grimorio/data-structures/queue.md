@@ -6,31 +6,26 @@ alias:
   - cola
   - FIFO
 ---
-
 ## 1. Qué es y cómo funciona
 
 ### Intuición
-
 Una cola es como la fila de un banco: el primero que llega es el primero que se atiende.
 Resuelve problemas donde el orden de llegada debe preservarse (FIFO). Es una estructura con acceso restringido a sus dos extremos: se inserta por un lado y se elimina por el otro.
 
 ### Definición / propiedades
-
 - Estructura FIFO (First-In, First-Out)
 - Solo se inserta por el fondo (`rear`) y solo se elimina por el frente (`front`)
 - No hay acceso directo a elementos intermedios
 - Invariante clave: el frente siempre representa el elemento más antiguo que sigue en la cola
 
 ### Representación
+![](/attachments/grimorio/data-structures/queue.svg)
 
-![](/attachments/grimorio/data-structures/queue-circular-animada.svg)
-
-Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la elección importa. Sobre una lista enlazada basta con guardar dos punteros (`front` y `rear`) para tener ambas operaciones en $O(1)$. Sobre un array la implementación ingenua es una trampa: si se desencola desplazando todos los elementos una posición a la izquierda, `dequeue` cuesta $O(n)$. La solución estándar es tratar el arreglo como **circular** (_ring buffer_), moviendo los índices con módulo en lugar de mover los datos.
+Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la elección importa. Sobre una lista enlazada basta con guardar dos punteros (`front` y `rear`) para tener ambas operaciones en $O(1)$. Sobre un array la implementación ingenua es una trampa: si se desencola desplazando todos los elementos una posición a la izquierda, `dequeue` cuesta $O(n)$. La solución estándar es tratar el arreglo como **circular** (*ring buffer*), moviendo los índices con módulo en lugar de mover los datos.
 
 ## 2. Operaciones y complejidad
 
 ### Operaciones principales
-
 - `enqueue(x)` inserta un elemento en el fondo
 - `dequeue()` elimina y retorna el elemento del frente
 - `peek()` / `front()` consulta el frente sin eliminarlo
@@ -39,16 +34,16 @@ Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la e
 ### Complejidad
 
 | Operación | Tiempo |
-| :-------- | :----- |
+| :--- | :--- |
 | `enqueue` | $O(1)$ |
 | `dequeue` | $O(1)$ |
-| `peek`    | $O(1)$ |
-| Espacio   | $O(n)$ |
+| `peek` | $O(1)$ |
+| Búsqueda / recorrido | $O(n)$ |
+| Espacio | $O(n)$ |
 
-> **Nota:** el $O(1)$ de `enqueue` es _amortizado_ si la cola se apoya en un [[dynamic array]] que se redimensiona al llenarse. Con array circular de capacidad fija, o con lista enlazada, es $O(1)$ en el peor caso.
+> **Nota:** el $O(1)$ de `enqueue` es *amortizado* si la cola se apoya en un [[dynamic array]] que se redimensiona al llenarse. Con array circular de capacidad fija, o con lista enlazada, es $O(1)$ en el peor caso.
 
 ### Detalles operativos
-
 - **Underflow:** hacer `dequeue` o `peek` sobre una cola vacía es un error, no un valor por defecto.
 - **Overflow:** con capacidad fija, encolar en una cola llena falla (o descarta, según la política elegida).
 - **Ambigüedad vacía/llena:** en un array circular, `front == rear` ocurre tanto cuando está vacía como cuando está llena. Se desambigua guardando el `size`, o dejando un slot siempre libre.
@@ -57,13 +52,19 @@ Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la e
 ## 3. Implementación
 
 ### Idea de implementación
-Hay dos estrategias típicas. Sobre [[linked list]] basta mantener dos punteros: `front` (para desencolar) y `rear` (para encolar); cada operación mueve un puntero y reengancha un enlace. Sobre array, la implementación ingenua desplaza elementos en cada `dequeue`, lo cual es $O(n)$; la solución estándar es un **buffer circular**, donde `front` y `rear` avanzan con aritmética modular (`(i + 1) % capacidad`) y reciclan el espacio liberado sin mover datos.
+Mantener dos referencias a los extremos y no tocar nunca el medio.
+Con lista enlazada: `front` es el `head` y `rear` es el `tail`; se inserta en el tail y se elimina desde el head (nunca al revés, porque eliminar el tail en una lista simple es $O(n)$).
+Con array circular: los índices avanzan con `(i + 1) % capacidad`, de modo que el espacio liberado al frente se reutiliza sin desplazar datos.
+
+![](/attachments/grimorio/data-structures/queue-circular-animada.svg)
+
+En la animación se ve el punto clave: al encolar `F` en el índice 5, `rear` no se sale del arreglo sino que vuelve al 0, y el siguiente `enqueue` ocupa el slot que los `dequeue` habían liberado. Los datos nunca se mueven de lugar; lo único que avanza son los dos índices.
 
 ### Invariantes
-- `front` siempre apunta al elemento más antiguo disponible para desencolar.
-- `rear` siempre apunta a la próxima posición libre donde insertar.
-- En el buffer circular, se mantiene `size` explícito para distinguir "vacía" de "llena" cuando `front == rear`.
-- Ningún `dequeue` ni `peek` se ejecuta sobre una cola vacía.
+- `front` referencia siempre al elemento más antiguo vivo; `rear`, al más reciente
+- La cola está vacía si y solo si `size == 0` (y entonces `front` y `rear` son nulos o irrelevantes)
+- Todo elemento sale exactamente en el mismo orden relativo en que entró
+- Ninguna operación elemental recorre ni desplaza el contenido
 
 ### Ejemplo de código
 
@@ -71,98 +72,45 @@ Hay dos estrategias típicas. Sobre [[linked list]] basta mantener dos punteros:
 class Queue:
     def __init__(self, capacidad):
         self.data = [None] * capacidad
-        self.capacidad = capacidad
         self.front = 0
         self.size = 0
 
     def enqueue(self, x):
-        if self.size == self.capacidad:
+        if self.size == len(self.data):
             raise Exception("Queue overflow")
-        rear = (self.front + self.size) % self.capacidad
-        self.data[rear] = x
+        self.data[(self.front + self.size) % len(self.data)] = x
         self.size += 1
 
     def dequeue(self):
         if self.size == 0:
             raise Exception("Queue underflow")
         x = self.data[self.front]
-        self.front = (self.front + 1) % self.capacidad
+        self.front = (self.front + 1) % len(self.data)
         self.size -= 1
         return x
+
+    def is_empty(self):
+        return self.size == 0
 ```
 
-#### Ejemplo de uso típico: BFS por niveles
+#### Ejemplo de uso típico
 
 Recorrido por niveles (BFS) sobre un grafo: la cola garantiza que se visite todo lo que está a distancia $k$ antes que lo que está a distancia $k+1$.
 
-
 ```python
-from collections import deque
-
 def bfs(grafo, inicio):
     visitados = {inicio}
-    orden = []
-    q = deque([inicio])
-    while q:
-        nodo = q.popleft()
-        orden.append(nodo)
+    q = Queue(len(grafo))
+    q.enqueue(inicio)
+
+    while not q.is_empty():
+        nodo = q.dequeue()
+        print(nodo)
         for vecino in grafo[nodo]:
             if vecino not in visitados:
                 visitados.add(vecino)
-                q.append(vecino)
-    return orden
+                q.enqueue(vecino)
 ```
-
-**Entrada:** el siguiente grafo, partiendo del nodo `A`.
-
-```
-    A
-   / \
-  B   C
-   \ /
-    D
-    |
-    E
-```
-
-```python
-grafo = {
-    "A": ["B", "C"],
-    "B": ["A", "D"],
-    "C": ["A", "D"],
-    "D": ["B", "C", "E"],
-    "E": ["D"],
-}
-
-print(bfs(grafo, "A"))
-```
-
-**Salida:**
-
-```
-['A', 'B', 'C', 'D', 'E']
-```
-
-El grafo tiene forma de rombo con una cola colgando de `D`:
-
-```
-    A
-   / \
-  B   C
-   \ /
-    D
-    |
-    E
-```
-
-BFS lo recorre en capas, alejándose de a un paso por vez desde `A`:
-
-- **Nivel 0** (`A`): arranca la cola con `[A]`. Se saca `A`, se marca como visitado y es el primero en `orden`.
-- **Nivel 1** (`B`, `C`): al procesar `A` se descubren sus vecinos `B` y `C`, y se encolan en ese orden: `[B, C]`.
-- **Nivel 2** (`D`): se saca `B`; su vecino `D` todavía no está visitado, así que se marca y se encola. Se saca `C`; también tiene a `D` como vecino, pero ya está en `visitados`, así que no se vuelve a encolar. `D` llegó a la cola por el camino `A → B → D`.
-- **Nivel 3** (`E`): se saca `D`; su único vecino nuevo es `E`, que se encola y se visita al final.
-
-En ningún momento se visita un nodo de un nivel antes de terminar con todos los del nivel anterior — esa es la garantía que da usar una cola (FIFO) en vez de, por ejemplo, una pila.
 
 ## 4. Uso y criterio
 
@@ -173,61 +121,65 @@ En ningún momento se visita un nodo de un nivel antes de terminar con todos los
 - Colas de impresión, de pedidos, de mensajes: cualquier atención por orden de llegada
 
 ### Cuándo NO usarlo
-- Si el orden relevante no es el de llegada sino una prioridad explícita (usar cola de prioridad / heap).
-- Si hace falta procesar lo más reciente primero (usar [[stack]]).
-- Si se necesita insertar o eliminar por ambos extremos (usar [[deque]]).
-- Si se necesita acceso aleatorio frecuente a posiciones intermedias (usar [[array]]).
+- Cuando el orden de atención depende de una **prioridad** y no de la llegada: ahí corresponde una *priority queue* (heap), no una cola.
+- Cuando hay que procesar lo más reciente primero: eso es un [[stack]].
+- Cuando se necesita acceso aleatorio o búsqueda frecuente por posición o clave: [[array]], [[map]] o [[hash table]].
+- Cuando hace falta insertar o eliminar en ambos extremos: [[deque]].
 
 ### Comparaciones
-- **vs [[stack]].** orden opuesto: la cola procesa FIFO, la pila LIFO. BFS (Breadth-First Search) usa cola porque explora nivel por nivel, visitando primero los nodos más cercanos al origen; DFS (Depth-First Search) usa pila porque profundiza primero antes de retroceder.
-- **vs [[deque]].** el deque generaliza a la cola, permitiendo operar en ambos extremos. Usar una cola en lugar de un deque comunica y garantiza la restricción FIFO por diseño, en vez de dejar disponibles operaciones que romperían esa semántica.
-- **vs cola de prioridad (heap).** la cola ordena estrictamente por orden de llegada; la cola de prioridad ordena por una prioridad explícita, sin importar cuándo se insertó cada elemento. Cuando "más antiguo" y "más urgente" no coinciden, corresponde una cola de prioridad.
+- **vs [[stack]].** Orden opuesto sobre la misma restricción de acceso: el stack procesa en LIFO y la cola en FIFO. Es la comparación que más cambia el resultado de un algoritmo: reemplazar la cola de un BFS por una pila lo convierte en un DFS, y el recorrido deja de garantizar caminos mínimos en aristas. Elegí cola cuando el orden de llegada (o la distancia) debe preservarse; elegí pila cuando querés invertirlo o deshacerlo.
+- **vs [[deque]].** El deque es una generalización que incluye a la cola: permite insertar y eliminar en ambos extremos. Usar un deque como cola funciona, pero expone operaciones que rompen el contrato FIFO. Preferí la cola cuando querés que la estructura garantice ese contrato por diseño.
+- **vs [[linked list]].** La cola es una lista enlazada con acceso restringido a los extremos. Esa restricción es una ventaja: hace imposible insertar en el medio y romper la semántica. Usá la lista cuando necesites operar en posiciones arbitrarias.
 
 ### Ventajas / desventajas
 
-| Ventajas | Desventajas |
-| :--- | :--- |
-| Operaciones $O(1)$ garantizadas (buffer circular o linked list) | No permite acceso ni búsqueda eficiente a elementos intermedios |
-| Modelo mental simple: refleja el orden natural de llegada | Rígida: no sirve si hace falta reordenar o acceder por prioridad |
-| Buena localidad de caché con buffer circular | Con capacidad fija hay que resolver overflow y la ambigüedad vacía/llena |
+Ventajas:
+
+- Operaciones $O(1)$ en ambos extremos
+- Modelo mental simple y justo: nadie se adelanta
+- Desacopla productores de consumidores sin coordinación explícita
+
+Desventajas:
+
+- Muy limitada: sin acceso aleatorio ni búsqueda eficiente
+- Con array circular hay que administrar capacidad y wrap-around a mano
+- No expresa prioridades ni vencimientos; si el problema los tiene, la cola no alcanza
 
 ### Señales de reconocimiento
-- "Procesar en el orden en que llegan" / "primero en entrar, primero en salir".
-- Recorrido "por niveles" o "por oleadas" (BFS, propagación de estados).
-- Simulación de una fila de espera real, o "los primeros k en llegar".
+- "Atender / procesar en orden de llegada"
+- "Nivel por nivel", "camino más corto en cantidad de pasos" (BFS)
+- "Productor y consumidor", "buffer", "pipeline"
+- "Turnos", "espera", "cola de trabajos"
 
 ## 5. Relaciones y extensiones
 
 ### Variantes
-
-- Cola circular: normalmente implementada sobre un array. Cuando se alcanza el final de este, se puede volver al comienzo aprovechando las posiciones que quedaron libres. Esto permite utilizar eficientemente el espacio disponible y evita tener que desplazar elementos.
-- Cola de prioridad: cada elemento de la cola tiene asociada una prioridad. El siguiente elemento en ser procesado no necesariamente es el que llegó primero, sino el que posee mayor prioridad. Una estructura común para implementarla eficientemente es el heap.
-- Deque (double-ended queue): permite insertar y eliminar elementos desde ambos extremos. Es más flexible que una cola tradicional, ya que permite comportamientos similares tanto a una cola como a una pila.
+- **Cola circular (*ring buffer*):** implementación sobre arreglo de capacidad fija; es la variante estándar en sistemas embebidos y buffers de I/O.
+- **Cola de prioridad:** el frente no es el más antiguo sino el de mayor prioridad; se implementa con un heap binario, con `enqueue`/`dequeue` en $O(\log n)$.
+- **Cola acotada / bloqueante:** con capacidad máxima; el productor espera si está llena y el consumidor si está vacía.
+- **Cola con dos pilas:** dos [[stack]] (entrada y salida) simulan una cola con `dequeue` en $O(1)$ amortizado; es el truco clásico para obtener una cola persistente o funcional.
 
 ### Relación con otras estructuras
-
-- Pila: ambas restringen el acceso directo a los elementos y definen claramente dónde se insertan y eliminan.
-- Árboles y grafos: el algoritmo BFS utiliza una cola para garantizar que los nodos se procesen por niveles.
-- Arrays y linked lists: una cola puede implementarse utilizando arrays o listas enlazadas.
+- Es el motor de BFS en grafos y árboles, igual que el [[stack]] lo es de DFS
+- Caso particular de [[deque]] (restringido a un extremo por operación)
+- Se implementa sobre [[linked list]], [[array]] o [[dynamic array]]
 
 ### Notas avanzadas
 
-#### Persistencia
-Una cola puede almacenarse en memoria secundaria para conservar los elementos pendientes incluso cuando el programa deja de ejecutarse. Esto resulta útil en sistemas de procesamiento de tareas y colas de mensajes, donde no se debe perder el trabajo pendiente ante una interrupción.
-
 #### Concurrencia
-En sistemas donde varios procesos o hilos producen y consumen elementos simultáneamente, es necesario utilizar mecanismos de sincronización para evitar problemas de condiciones de carrera. Para estos escenarios existen implementaciones de colas concurrentes diseñadas específicamente para permitir el acceso seguro de múltiples procesos o hilos.
+La cola es la estructura de intercambio por excelencia entre hilos. Protegerla con un mutex es simple pero genera contención, ya que productores y consumidores compiten por el mismo lock aunque toquen extremos distintos. Las implementaciones *lock-free* (Michael–Scott) usan `compare-and-swap` sobre los punteros de cabeza y cola para dejar avanzar a ambos lados en paralelo; escalan mejor, pero deben resolver el problema ABA y la recuperación de memoria.
 
-#### Paralelismo
-Una cola puede utilizarse para distribuir tareas entre distintos workers, de modo que los productores agregan trabajo y los consumidores lo toman para ejecutarlo. Esto permite repartir dinámicamente la carga de trabajo.
+#### Persistencia
+Una cola persistente (que conserva sus versiones anteriores) no sale gratis con la representación de dos punteros. La construcción funcional clásica —dos listas, "entrada" invertida y "salida"— da $O(1)$ amortizado, pero la amortización se rompe si se reutiliza una versión vieja muchas veces; para $O(1)$ en el peor caso hay que recurrir a *real-time queues* con inversión incremental.
 
-#### Colas de mensajes
-Las colas de mensajes se utilizan para comunicar componentes de una aplicación de forma asíncrona. Un productor coloca mensajes en la cola y un consumidor los procesa posteriormente. Esto permite desacoplar componentes y manejar picos de demanda mediante el almacenamiento temporal de tareas.
+#### Costos ocultos de memoria
+En la versión con lista enlazada, cada elemento paga un puntero extra y una asignación dinámica, con mala localidad de caché. El array circular es lo contrario: acceso contiguo y predecible, pero capacidad fija. Para colas de alto throughput casi siempre gana el ring buffer.
 
 ## 6. Referencias y recursos
-- [Queue Data Structure - Devopedia](https://devopedia.org/queue-data-structure)
-- [[COR2011]] - Chapter 10.1 Stacks and queues
-- [[DRO1995]] - Chapter 3 Stacks and queues
-- Geek for Geeks. Queue Data Structure. Recuperado de: [Queue Data Structure - GeeksforGeeks](https://www.geeksforgeeks.org/dsa/queue-data-structure/)
-- Geek for Geeks. Queue in Python. Recuperado de: [Queue in Python - GeeksforGeeks](https://www.geeksforgeeks.org/python/queue-in-python/)
-- [VisuAlgo - Queue](https://visualgo.net/en/queue) _(visualización interactiva de enqueue/dequeue y del buffer circular)_
+- [[COR2011]] - Chapter 10.1 Stacks and queues; Chapter 22.2 Breadth-first search
+- [[GOO2005]] - Chapter 5 Stacks, Queues, and Deques
+- [[LAF2002]] - Chapter 4 Stacks and Queues
+- Michael, M. M., & Scott, M. L. (1996). *Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms*. Recuperado de: [PODC '96](https://dl.acm.org/doi/10.1145/248052.248106)
+- Okasaki, C. (1995). *Simple and Efficient Purely Functional Queues and Deques*. Journal of Functional Programming. Recuperado de: [JFP](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/simple-and-efficient-purely-functional-queues-and-deques/7B3036772616B39E87BF7FBD119015AB)
+- Visualización interactiva de cola y cola circular: [VisuAlgo - Linked List / Queue](https://visualgo.net/en/list)
+- Python Software Foundation. *queue - A synchronized queue class*. Recuperado de: [Python docs](https://docs.python.org/3/library/queue.html)
