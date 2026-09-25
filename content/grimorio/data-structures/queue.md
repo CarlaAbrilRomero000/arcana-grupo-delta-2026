@@ -202,17 +202,11 @@ En ningún momento se visita un nodo de un nivel antes de terminar con todos los
 
 ### Notas avanzadas
 
-#### Persistencia
-Una cola puede almacenarse en memoria secundaria para conservar los elementos pendientes incluso cuando el programa deja de ejecutarse. Esto resulta útil en sistemas de procesamiento de tareas y colas de mensajes, donde no se debe perder el trabajo pendiente ante una interrupción.
+#### Persistencia y colas de mensajes
+Una cola puede almacenarse en memoria secundaria para no perder el trabajo pendiente ante una interrupción. Sobre esa idea se apoyan las colas de mensajes: comunican componentes de forma asíncrona y desacoplada, donde un productor encola mensajes y un consumidor los procesa después, absorbiendo picos de demanda.
 
-#### Concurrencia
-En sistemas donde varios procesos o hilos producen y consumen elementos simultáneamente, es necesario utilizar mecanismos de sincronización para evitar problemas de condiciones de carrera. Para estos escenarios existen implementaciones de colas concurrentes diseñadas específicamente para permitir el acceso seguro de múltiples procesos o hilos.
-
-#### Paralelismo
-Una cola puede utilizarse para distribuir tareas entre distintos workers, de modo que los productores agregan trabajo y los consumidores lo toman para ejecutarlo. Esto permite repartir dinámicamente la carga de trabajo.
-
-#### Colas de mensajes
-Las colas de mensajes se utilizan para comunicar componentes de una aplicación de forma asíncrona. Un productor coloca mensajes en la cola y un consumidor los procesa posteriormente. Esto permite desacoplar componentes y manejar picos de demanda mediante el almacenamiento temporal de tareas.
+#### Concurrencia y paralelismo
+Cuando varios hilos o procesos producen y consumen simultáneamente, hace falta sincronización para evitar condiciones de carrera; existen colas concurrentes pensadas para ese acceso seguro. Ese mismo esquema productor/consumidor permite repartir tareas entre workers para paralelizar el trabajo.
 
 ## 6. Referencias y recursos
 - [Queue Data Structure - Devopedia](https://devopedia.org/queue-data-structure)
