@@ -23,7 +23,9 @@ Resuelve problemas donde el orden de llegada debe preservarse (FIFO). Es una est
 
 ### Representación
 
-![](/attachments/grimorio/data-structures/queue-circular-animada.svg)
+![Arreglo de 6 posiciones con los índices front y rear, y una flecha que une la última posición con la primera](/attachments/grimorio/data-structures/queue-circular.svg)
+
+_Una cola de 5 elementos sobre un arreglo circular de capacidad 6: `front` marca el próximo elemento en salir y `rear` la próxima posición libre; la flecha inferior es el salto del final al principio, que hace que `G` quede guardado antes que `C`._
 
 Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la elección importa. Sobre una lista enlazada basta con guardar dos punteros (`front` y `rear`) para tener ambas operaciones en $O(1)$. Sobre un array la implementación ingenua es una trampa: si se desencola desplazando todos los elementos una posición a la izquierda, `dequeue` cuesta $O(n)$. La solución estándar es tratar el arreglo como **circular** (_ring buffer_), moviendo los índices con módulo en lugar de mover los datos.
 
@@ -101,14 +103,56 @@ from collections import deque
 
 def bfs(grafo, inicio):
     visitados = {inicio}
+    orden = []
     q = deque([inicio])
     while q:
         nodo = q.popleft()
+        orden.append(nodo)
         for vecino in grafo[nodo]:
             if vecino not in visitados:
                 visitados.add(vecino)
                 q.append(vecino)
+    return orden
 ```
+
+**Entrada:** el siguiente grafo, partiendo del nodo `A`.
+
+```
+    A
+   / \
+  B   C
+   \ /
+    D
+    |
+    E
+```
+
+```python
+grafo = {
+    "A": ["B", "C"],
+    "B": ["A", "D"],
+    "C": ["A", "D"],
+    "D": ["B", "C", "E"],
+    "E": ["D"],
+}
+
+print(bfs(grafo, "A"))
+```
+
+**Salida:**
+
+```
+['A', 'B', 'C', 'D', 'E']
+```
+
+El grafo tiene forma de rombo con una cola colgando de `D`, y BFS lo recorre en capas, alejándose de a un paso por vez desde `A`:
+
+- **Nivel 0** (`A`): arranca la cola con `[A]`. Se saca `A`, se marca como visitado y es el primero en `orden`.
+- **Nivel 1** (`B`, `C`): al procesar `A` se descubren sus vecinos `B` y `C`, y se encolan en ese orden: `[B, C]`.
+- **Nivel 2** (`D`): se saca `B`; su vecino `D` todavía no está visitado, así que se marca y se encola. Se saca `C`; también tiene a `D` como vecino, pero ya está en `visitados`, así que no se vuelve a encolar. `D` llegó a la cola por el camino `A → B → D`.
+- **Nivel 3** (`E`): se saca `D`; su único vecino nuevo es `E`, que se encola y se visita al final.
+
+En ningún momento se visita un nodo de un nivel antes de terminar con todos los del nivel anterior — esa es la garantía que da usar una cola (FIFO) en vez de, por ejemplo, una pila.
 
 ## 4. Uso y criterio
 
