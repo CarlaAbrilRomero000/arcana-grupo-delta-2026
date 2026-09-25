@@ -23,13 +23,9 @@ Resuelve problemas donde el orden de llegada debe preservarse (FIFO). Es una est
 
 ### Representación
 
-![Cola de capacidad 6 sobre un arreglo circular](/attachments/grimorio/data-structures/queue-circular.svg)
+![Arreglo de 6 posiciones con los índices front y rear, y una flecha que une la última posición con la primera](/attachments/grimorio/data-structures/queue-circular.svg)
 
-Los seis casilleros son las posiciones de un arreglo de capacidad 6, y los números `0` a `5` son sus índices, no su contenido. La cola guarda cinco elementos: `C` en la posición 2, `D` en la 3, `E` en la 4, `F` en la 5 y `G` en la 0.
-
-Las dos flechas son los índices que la cola necesita recordar además de los datos. `front` señala la posición 2, que contiene a `C`: el elemento más antiguo y el próximo en salir. `rear` señala la posición 1, que está libre: ahí se escribirá el próximo elemento que se encole, representado por la `H` de borde punteado.
-
-El orden lógico no coincide con el del arreglo: se lee desde `front` hacia la derecha y, al pasar la última posición, se sigue desde la primera. Acá eso da `C, D, E, F, G`. La flecha curva inferior es ese salto, que en el código es la cuenta `(i + 1) % 6`: por eso `G`, encolado después de `F`, quedó guardado antes que `C`. Las posiciones 0 y 1 se liberaron al desencolar, y la cola las reutiliza sin mover ningún dato.
+_Una cola de 5 elementos sobre un arreglo circular de capacidad 6: `front` marca el próximo elemento en salir y `rear` la próxima posición libre; la flecha inferior es el salto del final al principio, que hace que `G` quede guardado antes que `C`._
 
 Puede implementarse sobre [[array]], [[dynamic array]] o [[linked list]], y la elección importa. Sobre una lista enlazada basta con guardar dos punteros (`front` y `rear`) para tener ambas operaciones en $O(1)$. Sobre un array la implementación ingenua es una trampa: si se desencola desplazando todos los elementos una posición a la izquierda, `dequeue` cuesta $O(n)$. La solución estándar es tratar el arreglo como **circular** (_ring buffer_), moviendo los índices con módulo en lugar de mover los datos.
 
